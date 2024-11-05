@@ -19,6 +19,8 @@ from googletrans import Translator
 import logging
 import subprocess
 
+
+
 from textual.app import App, ComposeResult
 from textual.containers import Vertical, VerticalScroll
 from textual.widgets import Input, Button, Static
