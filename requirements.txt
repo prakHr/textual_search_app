@@ -1,0 +1,8 @@
+shutup
+ml-things
+textual
+playwright
+lingua-language-detector
+EmotionExtractor
+googletrans
+mpire
