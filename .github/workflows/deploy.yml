@@ -27,21 +27,6 @@ jobs:
       run: |
         python -m nltk.downloader punkt
 
-    - name: Run Textual App in Background
+    - name: Run Textual App
       run: |
-        nohup textual-web --config ganglion.toml > output.log 2>&1 &
-        sleep 5  # Allow time for output to be generated
-
-    - name: List Files in Directory (for Debugging)
-      run: ls -al
-
-    - name: Display output.log Content (for Debugging)
-      if: always()
-      run: cat output.log
-
-    - name: Upload Output Log
-      if: always()
-      uses: actions/upload-artifact@v3
-      with:
-        name: output-log
-        path: output.log
+        textual-web --config ganglion.toml
