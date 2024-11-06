@@ -27,6 +27,15 @@ jobs:
       run: |
         python -m nltk.downloader punkt
 
-    - name: Run Textual App
+    - name: Run Textual App and Generate Output
       run: |
+        # This assumes that textual-web generates static output to a directory like `./public`
         textual-web --config ganglion.toml
+
+    - name: Deploy to GitHub Pages
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        branch: gh-pages
+        folder: public  # This should be the folder where the static output is saved
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
