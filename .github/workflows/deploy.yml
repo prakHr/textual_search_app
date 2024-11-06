@@ -27,11 +27,11 @@ jobs:
       run: |
         python -m nltk.downloader punkt
 
-    - name: Run Textual App and Generate Output
+    - name: Run Textual App in Background using nohup
       run: |
-        # This assumes that textual-web generates static output to a directory like `./public`
-        python search.py
-
+        nohup textual-web --config ganglion.toml > output.log 2>&1 &
+        echo "Textual app is running in the background."
+      
     - name: Deploy to GitHub Pages
       uses: JamesIves/github-pages-deploy-action@v4
       with:
