@@ -1,3 +1,6 @@
+[account]
+api_key = "QPQRH72C76F6"
+
 [app.Search]
 path = "./"
 command = "python search.py"
