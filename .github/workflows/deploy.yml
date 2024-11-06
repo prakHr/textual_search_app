@@ -30,7 +30,7 @@ jobs:
     - name: Run Textual App and Generate Output
       run: |
         # This assumes that textual-web generates static output to a directory like `./public`
-        textual-web --config ganglion.toml
+        python search.py
 
     - name: Deploy to GitHub Pages
       uses: JamesIves/github-pages-deploy-action@v4
