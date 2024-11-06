@@ -19,8 +19,6 @@ from googletrans import Translator
 import logging
 import subprocess
 
-
-
 from textual.app import App, ComposeResult
 from textual.containers import Vertical, VerticalScroll
 from textual.widgets import Input, Button, Static
@@ -28,7 +26,6 @@ from textual.reactive import reactive
 from textual.app import App, ComposeResult
 from textual.containers import Vertical
 from textual.widgets import Input, Button, Static
-
 
 from playwright.sync_api import sync_playwright
 from mpire import WorkerPool
@@ -48,7 +45,7 @@ def get_description_from_url(url: str):
         
         try:
             # Go to the target URL
-            page.goto(url, wait_until="domcontentloaded", timeout=5000)
+            page.goto(url, wait_until="domcontentloaded", timeout=2000)
             
             # Attempt to retrieve the meta description content
             description_element = page.locator("meta[name='description']")
@@ -98,34 +95,18 @@ def second_level_search(list_of_urls):
 
         # Extract information from each description concurrently
         # results = list(executor.map(extract__one_url_sync, descriptions))
-        results = list(executor.map(lambda url_desc: extract__one_url_sync(url_desc[0], url_desc[1]),
+        results = list(executor.map(lambda url_desc: extract__all_url_sync(url_desc[0], url_desc[1]),
                                      zip(list_of_urls, descriptions)))
-    return results
-
-# def second_level_search(list_of_urls):
-#     # n_jobs = 4
-#     list_of_dicts = [get_description_from_url(url)  for url in list_of_urls]
-#     list_of_dicts2 = [extract__one_url_sync(description) for description in list_of_dicts]
-#     # list_of_dicts = [{url:extract_urls_sync(get_description_from_url(url))} for url in list_of_urls]
-#     # with WorkerPool(n_jobs=n_jobs) as pool:
-#     #     updated_lists = pool.map(get_description_from_url, list_of_dicts, progress_bar=True)
-#     # # rv = []
-#     # # for updated_list in updated_lists:
-#     #     # rv+=updated_list
-#     # list_of_dicts2 = [{"query":query} for query in updated_lists]
-#     # with WorkerPool(n_jobs=n_jobs) as pool:
-#     #     updated_lists2 = pool.map(extract_urls_sync,list_of_dicts2,progress_bar=True)
-    
-#     return list_of_dicts2
+    return results[0]
 
 # Define the synchronous Playwright function
-def extract__one_url_sync(curr_url: str,query: str):
+def extract__all_url_sync(curr_url: str,query: str):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
-        
+        urls = []
         try:
-            page.goto("https://www.google.com", wait_until="domcontentloaded", timeout=5000)
+            page.goto("https://www.google.com", wait_until="domcontentloaded", timeout=2000)
 
             # Accept cookies if present
             if page.locator("button:has-text('I agree')").count() > 0:
@@ -137,35 +118,31 @@ def extract__one_url_sync(curr_url: str,query: str):
             search_input.press("Enter")
 
             # Wait for search results to load
-            page.wait_for_selector("a:has(h3)", timeout=5000)
+            page.wait_for_selector("a:has(h3)", timeout=2000)
 
             # Extract URLs from search results
             for element in page.locator("a:has(h3)").all():
                 url = element.get_attribute("href")
                 if url and url!=curr_url:
-                
-                    return url
+                    urls.append(url)
+                    
 
         except Exception as e:
             return f"An error occurred: {e}"
         finally:
             browser.close()
-    out_Dict = {}
-    out_Dict["emotion_detector"] = getAllLanguages(query)
-    out_Dict["first_level_search"]=urls
-    out_Dict["second_level_search"] = second_level_search(urls)
-    return out_Dict
-
+    return urls
+    
 
 # Define the synchronous Playwright function
-def extract_urls_sync(query: str):
+def extract_single_url_sync(query: str):
     urls = []
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
         
         try:
-            page.goto("https://www.google.com", wait_until="domcontentloaded", timeout=5000)
+            page.goto("https://www.google.com", wait_until="domcontentloaded", timeout=2000)
 
             # Accept cookies if present
             if page.locator("button:has-text('I agree')").count() > 0:
@@ -177,23 +154,28 @@ def extract_urls_sync(query: str):
             search_input.press("Enter")
 
             # Wait for search results to load
-            page.wait_for_selector("a:has(h3)", timeout=5000)
+            page.wait_for_selector("a:has(h3)", timeout=2000)
 
-            # Extract URLs from search results
-            for element in page.locator("a:has(h3)").all():
-                url = element.get_attribute("href")
-                if url:
-                    urls.append(url)
+            # Get only the first URL in the search results
+            first_result = page.locator("a:has(h3)").first
+            first_url = first_result.get_attribute("href")
+            if first_url:
+                urls.append(first_url)
 
         except Exception as e:
             urls.append(f"An error occurred: {e}")
         finally:
             browser.close()
-    out_Dict = {}
-    out_Dict["emotion_detector"] = getAllLanguages(query)
-    out_Dict["first_level_search"]=urls
-    out_Dict["second_level_search"] = second_level_search(urls)
+
+    # Get the emotion analysis and prepare output
+    out_Dict = {
+        "emotion_detector": getAllLanguages(query),
+        "first_level_search": urls,  # Only one URL
+        "second_level_search": second_level_search(urls)  # Pass first level URL to fetch related URLs
+    }
     return out_Dict
+
+# Second level search remains unchanged, as it is already set up to fetch all URLs
 
 
 
@@ -218,7 +200,7 @@ class SearchApp(App):
 
             if query:
                 # Run the synchronous Playwright function in a separate thread
-                future = self.executor.submit(extract_urls_sync, query)
+                future = self.executor.submit(extract_single_url_sync, query)
                 future.add_done_callback(self.display_results)
         elif event.button.id == "close_button":
             self.exit() 
