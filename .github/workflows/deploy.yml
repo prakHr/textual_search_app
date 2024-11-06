@@ -29,4 +29,4 @@ jobs:
 
     - name: Run Textual App
       run: |
-        python search.py
+        python ganglionMain.py

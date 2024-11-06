@@ -1,6 +1,7 @@
 shutup
 ml-things
 textual
+textual-web
 playwright
 lingua-language-detector
 EmotionExtractor

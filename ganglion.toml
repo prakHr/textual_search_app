@@ -1,0 +1,4 @@
+[app.Search]
+path = "./"
+command = "python search.py"
+
