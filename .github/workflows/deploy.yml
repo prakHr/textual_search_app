@@ -29,4 +29,4 @@ jobs:
 
     - name: Run Textual App
       run: |
-        textual-web --config ganglion.toml
+        nohup textual-web --config ganglion.toml > output.log 2>&1 &
