@@ -27,6 +27,13 @@ jobs:
       run: |
         python -m nltk.downloader punkt
 
-    - name: Run Textual App
+    - name: Run Textual App in Background
       run: |
         nohup textual-web --config ganglion.toml > output.log 2>&1 &
+
+    - name: Upload Output Log
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: output-log
+        path: output.log
